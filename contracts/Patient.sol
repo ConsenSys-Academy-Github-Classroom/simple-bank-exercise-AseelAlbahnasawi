@@ -1,19 +1,41 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+ 
+
 contract PatientRegistry {
-    struct Patient {
-        string pname;
-        uint256 page;
-        string dentalInfo;
+    address public owner;
+
+    constructor() {
+        owner = msg.sender;
     }
 
-    mapping(address => Patient) public patients;
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the owner can perform this action");
+        _;
+    }
 
-    event PatientRegistered(address indexed patientAddress, string pname);
+    struct Patient {
+        uint256 id;
+        string name;
+        uint256 birthdate;
+        string medicalHistory;
+    }
 
-    function registerPatient(string memory _ pname, uint256 _page, string memory _dentalInfo) public {
-        patients[msg.sender] = Patient(_pname, _page, _dentalInfo);
-        emit PatientRegistered(msg.sender, _pname);
+    uint256 public patientCount;
+    mapping(uint256 => Patient) public patients;
+
+    event PatientRegistered(uint256 indexed id, string name, uint256 birthdate);
+
+    function registerPatient(string memory _name, uint256 _birthdate, string memory _medicalHistory) external onlyOwner {
+        patientCount++;
+        patients[patientCount] = Patient(patientCount, _name, _birthdate, _medicalHistory);
+        emit PatientRegistered(patientCount, _name, _birthdate);
+    }
+
+    function getPatient(uint256 _id) external view returns (string memory name, uint256 birthdate, string memory medicalHistory) {
+        require(_id > 0 && _id <= patientCount, "Patient not found");
+        Patient memory patient = patients[_id];
+        return (patient.name, patient.birthdate, patient.medicalHistory);
     }
 }
